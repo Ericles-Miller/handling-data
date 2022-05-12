@@ -1116,4 +1116,3 @@ Rodou. Está tudo certo, reparem agora que eu tenho todas as informações do me
 
  Era isso que eu queria, agora já temos as informações que precisamos para, por exemplo, estimar um modelo de precificação e testar essas variáveis.
 
- Próximo vídeo, veremos como criar uma variável categórica a partir de variáveis que já temos no nosso *dataframe*. Até lá.
