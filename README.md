@@ -993,3 +993,127 @@ dados_listings = pd.merge(dados_listings, configuracao, left_index=True, right_i
 dados_listings
 ```
 ![17](https://user-images.githubusercontent.com/59926475/168146465-5b59e133-2475-41ea-8c1b-75b548bd1e0e.png)
+
+## Retirando Informações de Strings
+
+Voltando ao assunto de tratamento de dados no formato de texto e *strings*, temos mais uma informação no nosso *data frame* que é a coluna "anuncio_descricao", uma descrição simples de cada um dos imóveis que temos no nosso *data frame*.
+
+Para selecionar isso eu passei o `dados_listings` e selecionei apenas a coluna `['anuncio_descricao']`. Eu posso fazer um “Ctrl + Enter” e visualizar isso. Temos todas as descrições. Para visualizarmos melhor eu passo o `.values` e faço uma seleção, abro o operador de indexação `[:10]` "Shift + Enter". Isso vai permitir que eu veja os 10 primeiros mais amplamente.
+
+```python
+dados_listings['anuncio_descricao'].values[:10]
+```
+
+> array(['Amplo imóvel para venda com 3 quartos, sendo 1 suítes, e 2 banheiros no total.','Amplo imóvel para venda com 4 quartos, sendo 1 suítes, e 2 banheiros no total.','Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 5 quartos, sendo 4 suítes, e 5 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 1 suítes, e 2 banheiros no total.', 'Amplo imóvel para venda com 0 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 1 quartos, sendo 0 suítes, e 0 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.'], dtype=object)
+> 
+
+Cada descrição é idêntica, só muda a informação numérica, aqui está dizendo amplo imóvel para venda com 3 quartos, sendo uma suíte, dois banheiros. Isso é o primeiro registro, todos os outros seguem esse mesmo padrão.
+
+ Isso é uma simplificação da realidade, lógico que as descrições dos imóveis não seguem um padrão idêntico, isso é só para aprendermos a usar as ferramentas para fazer extrações dentro dessa *string*.
+
+ Para fazer isso, você deve estar lembrado que usamos o atributo STR nas aulas anteriores, é um atributo do objeto *series*, que nos permite fazer vetorizações. É como se estivéssemos aplicando métodos de *string* diretamente em uma *series*, conseguimos fazer isso de uma vez só em todos os itens da *string*.
+
+ O método que usaremos agora é o `str.extractall` que dá suporte a **Regex**, que é um padrão de texto, uma *string* que descreve um padrão que podemos usar para buscar informações dentro de uma *string*, fazer substituições.
+
+ Vamos começar a estudar isso. [Neste link do tópico "Desafio: Regex"](https://cursos.alura.com.br/course/python-pandas-tecnicas-avancadas/task/91771), deixei um problema bem interessante para você trabalhar com Regex também. Siga o exercício que vai ser bem legal.
+
+ Eu vou repetir o `dados_listings`, fazer essa seleção somente da coluna `['anuncio_descricao']`, passar o `.str`, chamar esse atributo e chamar a função `.extractall('')`, dentro dos parênteses eu posso passar o padrão Regex que eu quero que me ajude a buscar as informações numéricas dentro dessas *strings* que estamos vendo.
+
+ Para fazer isso, e abro e fecho parênteses dentro `()`, depois eu passo um caractere de barra invertida `\` que seria um caractere de escape. Logo depois o `d` que vai indicar que eu estou procurando um digito numérico dentro da minha *string* e no final eu coloco o símbolo de soma `+`.
+
+```python
+dados_listings['anuncio_descricao'].str.extractall('(\d+)')
+```
+
+Esse símbolo funciona da seguinte forma: se ele encontrar dois dígitos numéricos, por exemplo, o número 32, e se eu passar esse caractere `+`, ele vai considerar o número 32 como um número. Se eu não passar, ele vai considerar os dígitos, separando o 3 do 2, isto é, considera, mas separadamente.
+
+Eu não quero isso, eu quero que o 32 seja um número inteiro, por isso, eu coloquei o `+` aqui.
+
+Rodando isso apertando "Shift + Enter", temos como resposta esse *data frame*, um pouco estranho.
+
+```python
+dados_listings['anuncio_descricao'].str.extractall('(\d+)')
+
+```
+
+![18](https://user-images.githubusercontent.com/59926475/168150575-6444ecf2-22f3-4dc0-a65f-2d85796af2aa.png)
+Mas reparem, o primeiro índice é o índice do meu *dataframe* normal, seriam os índices que criamos anteriormente, o próprio índice do *dataframe* e esse match é justamente o que ele encontrou.
+
+ Em primeiro lugar ele encontrou o número 3, em segundo lugar, o número 1 e em terceiro lugar, o número 2. 3, 1 e 2. Como está na descrição dos imóveis. Depois ele encontrou o 4, 1 e 2 e assim sucessivamente.
+
+ Ele colocou isso em uma só coluna, precisamos organizar isso um pouco melhor para que possamos jogar essas informações em colunas que façam sentido, por exemplo, um coluna de número de quartos, número de suítes, número de banheiros dentro do nosso *dataframe*.
+
+ Eu vou salvar isso como configurações, vou chamar de configurações, seria configurações, `configuracao =` é melhor. Eu vou continuar com uma visualização embaixo, só que uma visualização de apenas alguns itens, `configuracao.head(9)`, só dos nove primeiros para ficar mais claro. Os 9 primeiros, temos as três informações de cada um desses registros.
+
+```python
+configuracao = dados_listings['anuncio_descricao'].str.extractall('(\d+)')
+configuracao.head(9)
+```
+
+![19](https://user-images.githubusercontent.com/59926475/168150579-c365ff54-207b-4fbf-bb34-eb874ef810c4.png)
+
+Para transformar isso no formato de coluna, por exemplo, eu quero que o 3, o 1 e o 2 estejam na mesma linha, o 4, 1 e 2, na mesma linha, o 2, 0 e 1 na mesma linha, temos o índice múltiplo. Para transformar esse índice em colunas eu uso outro método, o `.unstack()`, para fazer isso eu passo `configuração` e passo `.unstack()`.
+
+Só isso. Já vemos a modificação, ele transformou as linhas em colunas, o 3, 1 e 2 agora estão na mesma linha.
+
+```python
+configuracao.unstack()
+```
+
+![20](https://user-images.githubusercontent.com/59926475/168150581-01e52cb3-1359-443e-a35c-c9d0dd2abf42.png)
+
+Ele organizou, o *match* seria o índice que tínhamos no *dataframe* anterior, ele fez uma organização, por isso não estamos vendo o 47 agora, mas isso não é problema. Eu quero ainda fazer uma modificação, está vendo que tem um 0 no topo das colunas?
+
+Eu quero tirar esse 0 e quero também modificar esse 0, 1, 2 para o nome que representa essa coluna, são os quartos, as suítes e os banheiros. Para fazer isso, eu posso fazer diretamente chamando o .`rename()`, passo o parâmetro `columns={}` e dentro eu passo um dicionário com as informações que eu preciso para renomear essas colunas `{0: 'quartos', 1: 'suites, 2: 'banheiros'})`.
+
+```python
+configuracao.unstack().rename(columns={0: 'quartos', 1: 'suites', 2: 'banheiros'})
+```
+
+Eu quero que o 0 seja chamado de quartos, o 1, de suíte, o 2, de banheiros. Eu vou substituir isso tudo dentro de configurações, vou fazer `configuracao = configuracao`. E finalize aqui `configuracao`. Está tudo conforme esperamos.
+
+```python
+configuracao = configuracao.unstack().rename(columns={0: 'quartos', 1: 'suites', 2: 'banheiros'})
+configuracao
+```
+
+![21](https://user-images.githubusercontent.com/59926475/168150582-3d48557d-f1fa-4b36-85b5-a1406204d791.png)
+
+Se eu visualizar o `columns` de configuração, `configuracao.columns`, eu vou ver que é um índice múltiplo. Repare em cima, ele tem um índice múltiplo (*match*, quartos, suítes, banheiros).
+
+```
+configuracao.columnsCOPIAR CÓDIGO
+```
+
+> MultiIndex([('quartos', 'quartos'), ('quartos', 'suites'), ('quartos', 'banheiros')], names=[None, 'match'])
+> 
+
+Para eu juntar no meu *dataframe*, eu preciso eliminar o primeiro índice onde está escrito quartos. Para isso eu uso o outro método, o `droplevel()`.
+
+ Eu vou retirar um dos níveis do índice usando esse método. É bem simples, eu posso passar `configuracao.droplevel()`, dizer que nível eu quero que ele retire, como ele está pegando o primeiro nível, o índice começa com 0, eu vou dizer que eu quero que ele retire o nível 0 `level=0`.
+
+ E vou dizer que ele está trabalhando no eixo 1 que é o eixo das colunas, `axis=1`. Eu já vou fazer a modificação direto colocando `configuracao =`na frente da linha de código. Na próxima linha, faço `configuracao`. Olha lá.
+
+```python
+configuracao = configuracao.droplevel(level=0, axis=1)
+configuracao
+```
+
+![22](https://user-images.githubusercontent.com/59926475/168150585-62c3fcb4-55e1-4c11-a419-7d9da8c564d0.png)
+
+Ele retirou aquele índice, agora já está pronto para que eu possa juntar, fazer o `.merge()` do nosso *dataframe*. Eu passo `dados_listings = pd.merge(dados_listings, configuracao,`.
+
+O `dados_listings` vai ser o meu esquerdo, o outro vai ser o direito, eu não estou passando explicitamente porque eles estão na ordem dos parâmetros, não tem problema. Eu vou usar os índices para fazer a junção, eu vou falar que o `left_index=True, right_index=True)`. Eu quero visualizar o resultado que eu estou obtendo `dados_listings`.
+
+```python
+dados_listings = pd.merge(dados_listings, configuracao, left_index=True, right_index=True)
+dados_listingscap
+```
+
+![23](https://user-images.githubusercontent.com/59926475/168150588-540fffb5-bd2c-4248-a436-23fbe03ffe49.png)
+
+Rodou. Está tudo certo, reparem agora que eu tenho todas as informações do meu *dataframe* anterior, o `dados_listings`, mas no final, quartos, suites e banheiros.
+
+ Era isso que eu queria, agora já temos as informações que precisamos para, por exemplo, estimar um modelo de precificação e testar essas variáveis.
+
+ Próximo vídeo, veremos como criar uma variável categórica a partir de variáveis que já temos no nosso *dataframe*. Até lá.
