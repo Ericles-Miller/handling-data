@@ -521,4 +521,4 @@ Agora eu consigo fazer seleções de informações dentro, eu estou selecionando
 
  Agora eu já consigo fazer isso e o meu dado já está tratado para os dois arquivos, o `normal` e o `highlights`. O tratamento igual.
 
- Próxima aula, faremos combinações com os conjuntos de dados, juntar alguns conjuntos de dados. Até lá.
+
