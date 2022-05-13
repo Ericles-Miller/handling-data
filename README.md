@@ -1116,3 +1116,422 @@ Rodou. Está tudo certo, reparem agora que eu tenho todas as informações do me
 
  Era isso que eu queria, agora já temos as informações que precisamos para, por exemplo, estimar um modelo de precificação e testar essas variáveis.
 
+## Retirando Informações de Strings
+
+Voltando ao assunto de tratamento de dados no formato de texto e *strings*, temos mais uma informação no nosso *data frame* que é a coluna "anuncio_descricao", uma descrição simples de cada um dos imóveis que temos no nosso *data frame*.
+
+Para selecionar isso eu passei o `dados_listings` e selecionei apenas a coluna `['anuncio_descricao']`. Eu posso fazer um “Ctrl + Enter” e visualizar isso. Temos todas as descrições. Para visualizarmos melhor eu passo o `.values` e faço uma seleção, abro o operador de indexação `[:10]` "Shift + Enter". Isso vai permitir que eu veja os 10 primeiros mais amplamente.
+
+```python
+dados_listings['anuncio_descricao'].values[:10]
+```
+
+> array(['Amplo imóvel para venda com 3 quartos, sendo 1 suítes, e 2 banheiros no total.','Amplo imóvel para venda com 4 quartos, sendo 1 suítes, e 2 banheiros no total.','Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 5 quartos, sendo 4 suítes, e 5 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 1 suítes, e 2 banheiros no total.', 'Amplo imóvel para venda com 0 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 1 quartos, sendo 0 suítes, e 0 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.', 'Amplo imóvel para venda com 2 quartos, sendo 0 suítes, e 1 banheiros no total.'], dtype=object)
+> 
+
+Cada descrição é idêntica, só muda a informação numérica, aqui está dizendo amplo imóvel para venda com 3 quartos, sendo uma suíte, dois banheiros. Isso é o primeiro registro, todos os outros seguem esse mesmo padrão.
+
+ Isso é uma simplificação da realidade, lógico que as descrições dos imóveis não seguem um padrão idêntico, isso é só para aprendermos a usar as ferramentas para fazer extrações dentro dessa *string*.
+
+ Para fazer isso, você deve estar lembrado que usamos o atributo STR nas aulas anteriores, é um atributo do objeto *series*, que nos permite fazer vetorizações. É como se estivéssemos aplicando métodos de *string* diretamente em uma *series*, conseguimos fazer isso de uma vez só em todos os itens da *string*.
+
+ O método que usaremos agora é o `str.extractall` que dá suporte a **Regex**, que é um padrão de texto, uma *string* que descreve um padrão que podemos usar para buscar informações dentro de uma *string*, fazer substituições.
+
+ Vamos começar a estudar isso. [Neste link do tópico "Desafio: Regex"](https://cursos.alura.com.br/course/python-pandas-tecnicas-avancadas/task/91771), deixei um problema bem interessante para você trabalhar com Regex também. Siga o exercício que vai ser bem legal.
+
+ Eu vou repetir o `dados_listings`, fazer essa seleção somente da coluna `['anuncio_descricao']`, passar o `.str`, chamar esse atributo e chamar a função `.extractall('')`, dentro dos parênteses eu posso passar o padrão Regex que eu quero que me ajude a buscar as informações numéricas dentro dessas *strings* que estamos vendo.
+
+ Para fazer isso, e abro e fecho parênteses dentro `()`, depois eu passo um caractere de barra invertida `\` que seria um caractere de escape. Logo depois o `d` que vai indicar que eu estou procurando um digito numérico dentro da minha *string* e no final eu coloco o símbolo de soma `+`.
+
+```python
+dados_listings['anuncio_descricao'].str.extractall('(\d+)')
+```
+
+Esse símbolo funciona da seguinte forma: se ele encontrar dois dígitos numéricos, por exemplo, o número 32, e se eu passar esse caractere `+`, ele vai considerar o número 32 como um número. Se eu não passar, ele vai considerar os dígitos, separando o 3 do 2, isto é, considera, mas separadamente.
+
+Eu não quero isso, eu quero que o 32 seja um número inteiro, por isso, eu coloquei o `+` aqui.
+
+Rodando isso apertando "Shift + Enter", temos como resposta esse *data frame*, um pouco estranho.
+
+```python
+dados_listings['anuncio_descricao'].str.extractall('(\d+)')
+
+```
+
+![26](https://user-images.githubusercontent.com/59926475/168190747-f699381e-6a3b-448d-81be-0b29a355705c.png)
+
+Mas reparem, o primeiro índice é o índice do meu *dataframe* normal, seriam os índices que criamos anteriormente, o próprio índice do *dataframe* e esse match é justamente o que ele encontrou.
+
+ Em primeiro lugar ele encontrou o número 3, em segundo lugar, o número 1 e em terceiro lugar, o número 2. 3, 1 e 2. Como está na descrição dos imóveis. Depois ele encontrou o 4, 1 e 2 e assim sucessivamente.
+
+ Ele colocou isso em uma só coluna, precisamos organizar isso um pouco melhor para que possamos jogar essas informações em colunas que façam sentido, por exemplo, um coluna de número de quartos, número de suítes, número de banheiros dentro do nosso *dataframe*.
+
+ Eu vou salvar isso como configurações, vou chamar de configurações, seria configurações, `configuracao =` é melhor. Eu vou continuar com uma visualização embaixo, só que uma visualização de apenas alguns itens, `configuracao.head(9)`, só dos nove primeiros para ficar mais claro. Os 9 primeiros, temos as três informações de cada um desses registros.
+
+```python
+configuracao = dados_listings['anuncio_descricao'].str.extractall('(\d+)')
+configuracao.head(9)
+```
+
+![27](https://user-images.githubusercontent.com/59926475/168190750-d00fb8ae-eff8-4727-a1a1-6ddd3c366c15.png)
+
+Para transformar isso no formato de coluna, por exemplo, eu quero que o 3, o 1 e o 2 estejam na mesma linha, o 4, 1 e 2, na mesma linha, o 2, 0 e 1 na mesma linha, temos o índice múltiplo. Para transformar esse índice em colunas eu uso outro método, o `.unstack()`, para fazer isso eu passo `configuração` e passo `.unstack()`.
+
+Só isso. Já vemos a modificação, ele transformou as linhas em colunas, o 3, 1 e 2 agora estão na mesma linha.
+
+```python
+configuracao.unstack()
+```
+
+![28](https://user-images.githubusercontent.com/59926475/168190751-4fff4a70-0bb7-4674-b757-9e64cf4c2ebe.png)
+
+Ele organizou, o *match* seria o índice que tínhamos no *dataframe* anterior, ele fez uma organização, por isso não estamos vendo o 47 agora, mas isso não é problema. Eu quero ainda fazer uma modificação, está vendo que tem um 0 no topo das colunas?
+
+Eu quero tirar esse 0 e quero também modificar esse 0, 1, 2 para o nome que representa essa coluna, são os quartos, as suítes e os banheiros. Para fazer isso, eu posso fazer diretamente chamando o .`rename()`, passo o parâmetro `columns={}` e dentro eu passo um dicionário com as informações que eu preciso para renomear essas colunas `{0: 'quartos', 1: 'suites, 2: 'banheiros'})`.
+
+```python
+configuracao.unstack().rename(columns={0: 'quartos', 1: 'suites', 2: 'banheiros'})
+```
+
+Eu quero que o 0 seja chamado de quartos, o 1, de suíte, o 2, de banheiros. Eu vou substituir isso tudo dentro de configurações, vou fazer `configuracao = configuracao`. E finalize aqui `configuracao`. Está tudo conforme esperamos.
+
+```python
+configuracao = configuracao.unstack().rename(columns={0: 'quartos', 1: 'suites', 2: 'banheiros'})
+configuracao
+```
+
+![30](https://user-images.githubusercontent.com/59926475/168190752-e02b9f74-dd43-45de-a8dd-33ed6e8b058f.png)
+
+Se eu visualizar o `columns` de configuração, `configuracao.columns`, eu vou ver que é um índice múltiplo. Repare em cima, ele tem um índice múltiplo (*match*, quartos, suítes, banheiros).
+
+```python
+configuracao.columns
+```
+
+> MultiIndex([('quartos', 'quartos'), ('quartos', 'suites'), ('quartos', 'banheiros')], names=[None, 'match'])
+> 
+
+Para eu juntar no meu *dataframe*, eu preciso eliminar o primeiro índice onde está escrito quartos. Para isso eu uso o outro método, o `droplevel()`.
+
+ Eu vou retirar um dos níveis do índice usando esse método. É bem simples, eu posso passar `configuracao.droplevel()`, dizer que nível eu quero que ele retire, como ele está pegando o primeiro nível, o índice começa com 0, eu vou dizer que eu quero que ele retire o nível 0 `level=0`.
+
+ E vou dizer que ele está trabalhando no eixo 1 que é o eixo das colunas, `axis=1`. Eu já vou fazer a modificação direto colocando `configuracao =`na frente da linha de código. Na próxima linha, faço `configuracao`. Olha lá.
+
+```python
+configuracao = configuracao.droplevel(level=0, axis=1)
+configuracao
+```
+
+![31](https://user-images.githubusercontent.com/59926475/168190754-0b7eb5ef-7bb5-4218-9151-7d61ebc9c083.png)
+
+Ele retirou aquele índice, agora já está pronto para que eu possa juntar, fazer o `.merge()` do nosso *dataframe*. Eu passo `dados_listings = pd.merge(dados_listings, configuracao,`.
+
+O `dados_listings` vai ser o meu esquerdo, o outro vai ser o direito, eu não estou passando explicitamente porque eles estão na ordem dos parâmetros, não tem problema. Eu vou usar os índices para fazer a junção, eu vou falar que o `left_index=True, right_index=True)`. Eu quero visualizar o resultado que eu estou obtendo `dados_listings`.
+
+```python
+dados_listings = pd.merge(dados_listings, configuracao, left_index=True, right_index=True)
+dados_listingscap
+```
+
+![32](https://user-images.githubusercontent.com/59926475/168190755-477eb2d2-d4ac-43ae-b515-e786923ecb50.png)
+
+Rodou. Está tudo certo, reparem agora que eu tenho todas as informações do meu *dataframe* anterior, o `dados_listings`, mas no final, quartos, suites e banheiros.
+
+ Era isso que eu queria, agora já temos as informações que precisamos para, por exemplo, estimar um modelo de precificação e testar essas variáveis.
+
+ 
+
+## Criando Classificações - Dados Numéricos
+
+agora tendo como ponto de partida uma **informação numérica**, a ideia é pegar os imóveis e classificá-los entre "popular", "padrão" e "alto padrão" segundo o valor de venda desses imóveis. Faremos **classificações categóricas** a partir de um dado numérico, a ideia é essa.
+
+Eu vou começar colocando algumas informações básicas que eu vou precisar nessa construção: `valor_minimo`, que eu vou obter de `= dados_listings`. Vou selecionar a coluna `['anuncio_valores_venda']` e vou passar a função `.min()`. Já temos o valor mínimo.
+
+Eu preciso do `valor_maximo` que vai ser praticamente a mesma coisa `dados_listings['anuncio_valores_venda'].max()`.
+
+ Outra coisa que eu preciso é de rótulos. Como eu falei agora, `rotulos =` e eu tenho os seguintes rótulos, eu tenho uma cópia dos rótulos, vou colar aqui embaixo,. Como eu disse, eu vou classificar entre `['Popular', 'Padrão', 'Alto Padrão']` a partir da variável de preço. Vou rodar esse rótulo também para ficar na memória.
+
+```python
+valor_minimo = dados_listings['anuncio_valores_venda'].min()
+```
+
+```python
+valor_maximo = dados_listings['anuncio_valores_venda'].max()
+```
+
+```python
+rotulos = ['Popular', 'Padrão', 'Alto Padrão']
+```
+
+Eu tenho duas formas de fazer essa classificação usando o método `cut()` do Pandas. O `.cut()` vai me permitir criar **classes fixas**, **categorias fixas**, ou **classes personalizadas**. Vamos começar com as fixas, porque é mais simples.
+
+ Eu chamo o Pandas, `pd.cut()` e passo o parâmetro `x` que vai ser justamente a informação, a *series* com as informações que me interessam, a variável que eu vou utilizar como base que seria a coluna `pd.cut(x=dados_listings['anuncio_valores_venda'])`.
+
+ Outras informações que eu preciso passar para classes fixas são justamente o número de classes, eu passo isso com o parâmetro `bins=3` eu vou pedir para criar 3 classes. E eu também posso passar os rótulos no parâmetro `lables=`, como eu já construí em cima os rótulos: popular, alto popular, padrão. Eu vou passar `rotulos`. Estou deixando por conta do próprio Pandas fazer a minha classificação.
+
+```python
+pd.cut(x=dados_listings['anuncio_valores_venda'], bins=3, labels=rotulos)
+```
+
+> 0 Popular, 47 Popular, 1 Popular, 16 Popular, 2 Popular, ... , 60 Popular, 63 Popular, 64 Popular, 6 Popular, 68 Popular, Name: anuncio_valores_venda, Length: 70, dtype: category, Categories (3, object): ['Popular' < 'Padrão' < 'Alto Padrão']
+> 
+
+ Ele vai criar uma *series* para mim com essas classificações e eu vou pegar essa informação, vou juntar no meu *dataframe*, e ter uma nova classificação. Essa é uma forma de fazer.
+
+A outra forma que parece ser mais interessante, pelo menos para mim, onde eu posso organizar melhor as minhas classes e chamar o que realmente é um imóvel popular, imóvel padrão ou imóvel de alto padrão, as classes nesse que eu acabei de fazer as classes são fixas.
+
+ Eu posso fazer as classes personalizadas, nesse caso eu vou passar para o `bins` não um número, eu vou passar justamente os limites da minha classe.
+
+ Para isso, eu vou criar outra lista chamada `classes =` onde eu vou passar as informações que eu criei lá em cima, lembra do `valor_maximo` e `valor_minimo`? Eu vou pegar o `[valor_minimo]` copiar e trazer para baixo.
+
+ O segundo ponto vai ser o valor que eu já tenho, vou copiar para ficar mais fácil, eu tenho `400000` e o outro ponto vai ser `2000000,` e o ponto final `valor_maximo]`.
+
+```python
+#É preciso N pontos para obter N - 1 classes
+classes = [valor_minimo, 400000, 2000000, valor_maximo]COPIAR CÓDIGO
+```
+
+Por que eu estou criando esses quatro pontos? Eu vou deixar um comentário em cima para servir de ajuda para você. Quando eu quero ter, por exemplo, N -1 classes, eu preciso de N pontos, eu quero dizer que se eu, por exemplo, quero ter três classes, eu preciso de quatro pontos para fazer essa divisão.
+
+ Os dois primeiros vão dividir a minha primeira classe. Os próximos dois, a minha segunda classe. E depois, a minha terceira classe. Por isso eu preciso de quatro pontos para criar três classes.
+
+ Rodou esse “classes” e agora funciona basicamente do mesmo jeito, eu vou copiar o código de cima e fazer algumas modificações `pd.cut`, eu vou passar no `x` novamente essa informação `pd.cut(x=dados_listings['anuncio_valores_venda'],`.
+
+ No `bins=` eu vou passar a classe que eu acabei de criar `classes,`, no `labels=` eu vou continuar com o meu `rotulos`. E tem um parâmetro extra que se chama `include_lowest=` e eu vou colocar como `True)`.
+
+ O `include_lowest=True` vai incluir na classe inicial o `valor_minimo`. Se eu não colocar, ele vai excluir o `valor_minimo`. Por exemplo, se eu começo o meu dado com 0, se eu colocar isso como falso, ele não vai considerar o 0, aqui se esse mínimo for 0 ele vai considerar o 0. É isso que ele está fazendo.
+
+```python
+pd.cut(x=dados_listings['anuncio_valores_venda'], bins=classes, labels=rotulos, include_lowest=True)
+```
+
+> 0 Alto Padrão, 47 Alto Padrão, 1 Popular, 16 Padrão, 2 Alto Padrão, ... , 60 Popular, 63 Popular, 64 Popular, 66 Alto Padrão, 68 Padrão, Name: anuncio_valores_venda, Length: 70, dtype: category\n", Categories (3, object): ['Popular' < 'Padrão' < 'Alto Padrão']
+> 
+
+ Rodou e agora temos uma classificação um pouco diferente, imóveis de alto padrão, padrão e popular.
+
+ E eu posso pegar o código `dados_listings` e criar uma nova variável, vamos começar criando a variável "Ctrl + C > Ctrl + V", eu vou criar uma nova variável chamada de `['classe_valor'] =` que eu vou utilizar mais para frente, essa `classe_valor` vai ser uma variável que eu vou utilizar posteriormente.
+
+```python
+dados_listings['classe_valor'] = pd.cut(x=dados_listings['anuncio_valores_venda'], bins=classes, labels=rotulos, include_lowest=True)
+dados_listings
+```
+
+![33](https://user-images.githubusercontent.com/59926475/168190757-c126cf51-4f88-4dbe-aaad-9cb29fc96e56.png)
+
+Eu copio toda a linha de código `pd.cut()`  que são as classes - é uma *series*  - com as classes que eu estou criando e coloco abaixo. E eu posso visualizar o meu `dados_listings`  para ver o resultado do meu processo. No final, veremos essa nova classe de valor, "Alto Padrão", "Alto Padrão", "Popular", "Padrão" e assim sucessivamente.
+
+### Adicionando Informações
+
+Continuando o assunto de incluir mais informações do nosso *dataframe*, em algumas situações podemos estar interessados em criar novas colunas a partir das colunas que já temos no nosso *dataframe*, por exemplo, podemos rodar o **modelo de regressão** onde a nossa variável dependente seja o preço dos imóveis, mas durante as análises podemos descobrir que talvez seja mais interessante usar a variável, por exemplo, preço por metro quadrado do imóvel.
+
+Como temos essas duas variáveis no nosso *dataframe*, podemos construir isso de forma bem simples. Por conta de herdar características dos *arrays* `numpy`, porque o Pandas foi construído com base no na biblioteca `numpy`, conseguimos fazer operações entre as colunas de um *dataframe* de forma bem simples.
+
+ Basta realizar as operações, e já obtemos uma nova coluna a partir dessas operações. É isso que faremos agora, por exemplo, criar essa variável valor por metro quadrado.
+
+ Com o Pandas é bem simples, podemos realizar essa operação aqui. Eu chamo o `dados_listings`, estou criando uma nova variável que é `valor_m2` e igualando a justamente uma operação simples entre duas colunas, que seria a coluna `anuncio_valores_venda`, o valor do imóvel, dividido pela coluna `imovel_area`. Feita essa operação, obtemos a informação do valor por m².
+
+```python
+dados_listings['valor_m2'] = dados_listings['anuncio_valores_venda'] / dados_listings['imovel_area']
+```
+
+ Nessa situação podemos ter algum tipo de problema, porque estamos fazendo uma operação de divisão e sabemos que dividir um valor quando o denominador é nulo, é zero, essa divisão não existe, teremos um erro no nosso *dataframe*.
+
+ Precisamos colocar uma condição extra, eu vou mostrar para vocês, eu já fiz uma. Então, eu faço uma seleção, crio um novo *dataframe* com as variáveis interessantes para esse assunto, anúncio, o valor por área e o valor por metro quadrado que acabamos de criar. E fiz uma seleção de um trecho específico do nosso *dataframe*, entre as linhas 16, 17 e 18, `iloc[16:19]`.
+
+```python
+dados_listings['valor_m2'] = dados_listings['anuncio_valores_venda'] / dados_listings['imovel_area']
+```
+
+```python
+dados_listings[['anuncio_valores_venda', 'imovel_area', 'valor_m2]].iloc[16:19]
+
+```
+
+![34](https://user-images.githubusercontent.com/59926475/168190759-964cc8a6-7ec4-4cef-bf99-a76007e8ccc4.png)
+
+Reparem que na linha 13 temos justamente a área com o 0 e o valor do metro quadrado onde temos esse problema.
+
+ Para resolver isso, precisamos colocar uma condição, se a área do imóvel for igual a 0, eu mantenho a informação do 0, o valor do metro quadrado é 0, não existe, senão realizamos essa operação.
+
+ Para fazer isso, de forma bem simples, sem criar o iterador ou outras coisas que vão demorar um pouco mais para resolver, podemos usar o método `apply()` que é uma forma de aplicar funções em alguns eixos do nosso *dataframe*. Vamos ver como fazemos nessa situação.
+
+ Primeiro, eu vou criar uma função, usando **funções *lambda***, que são funções que não tem nome, são **funções anônimas**, vamos chamar assim, e também são funções simples, de uma linha só e podemos usar isso para aplicar as modificações do nosso *dataframe*.
+
+ Primeira coisa, eu chamo `lambda`, depois eu passo os argumentos da função, no caso, vai ter um argumento só que eu estou chamando de `data`, pode ser qualquer nome válido do Python. `data` vai representar o meu *dataframe* como um todo.
+
+ A partir disso eu já posso fazer as seleções, `: data`, eu vou pegar em cima o valor do imóvel, `['anuncio_valores_venda']`dividido, `/`, por `data` de novo, que seria o meu *dataframe*, pelo `['imovel_area']` que é a área do imóvel.
+
+ Feita essa operação, eu só vou realizá-la se o valor da área for diferente de 0. Logo, se, `if` - repare que eu estou fazendo tudo em uma linha só - `data['imovel_area']` for diferente, `!=0`, nesse caso eu realizo o que eu acabei de falar no código.
+
+ Se `imovel_area` for diferente de 0, eu coloco `data['anuncio_valores_venda'] / data['imovel_area']`. Caso contrário, ou seja, `else=`, eu coloco `0` mesmo. Isso é a minha função lambda que eu vou utilizar dentro do método `apply()`.
+
+ Eu vou colocar esse código dentro de uma variável para que eu possa passar isso lá, eu vou chamar essa variável de `valor_m2 =`, que seria a nossa função. Eu vou rodar e utilizar o método `apply()`. Criarei a variável novamente, só que agora sem esse problema que estamos vendo em cima, sem o "inf".
+
+```python
+valor_m2 = lambda data: data['anuncio_valores_venda'] / data['imovel_area'] if data['imovel_area'] != 0 else 0
+```
+
+Essa variável, `dados_listings['valor_m2'} =`, será resultado dessa função nos eixos que estão determinados, o eixo das colunas e vou usar essas variáveis.
+
+ O *data frame* que eu tenho que usar, o `dados_listings.apply`, eu passo para ele a minha função *lambda* que é o `valor_m2,` e digo, nesse caso, que eixo eu estou usando, como eu vou usar as colunas, eu tenho que dizer que eu estou usando o eixo das colunas `axis=1`.
+
+```python
+valor_m2 = lambda data: data['anuncio_valores_venda'] / data['imovel_area'] if data['imovel_area'] !=0 else 0
+```
+
+```python
+dados_listings['valor_m2'] = dados_listings.apply(valor_m2, axis=1)
+```
+
+Rodou, agora tudo bem. E essa mesma seleção que podemos observar em cima, podemos fazer embaixo, e verificar. Já não temos aquele problema, quando `imovel_area` for igual a 0, ele vai dizer que o valor do m² vai ser igual a 0.
+
+```python
+valor_m2 = lambda data: data['anuncio_valores_venda'] / data['imovel_area'] if data['imovel_area'] !=0 else 0
+```
+
+```python
+dados_listings['valor_m2'] = dados_listings.apply(valor_m2, axis=1)
+```
+
+```python
+dados_listings[['anuncio_valores_venda', 'imovel_area', 'valor_m2]].iloc[16:19]
+
+```
+
+![35](https://user-images.githubusercontent.com/59926475/168190762-06f23d8b-d993-4d98-ab49-eaa8c068c6aa.png)
+
+Outra forma de aplicarmos essa função `apply()` é justamente naquele dado da Piscina, podemos criar, por exemplo, uma coluna, usando as características do domicilio, que indique se esse imóvel tem piscina ou não.
+
+ Lembra que seria o `imovel_caracteristicas_condominio`. Se tivermos essa informação dentro daquela lista, no Python é lista e não *array*, vamos dizer que essa informação de piscina é *True*, se não, é *False*.
+
+ Para fazer isso eu posso usar o `apply()` também, só que nesse caso eu vou criar a variável piscina `dados_listings['Piscina'] =` e eu venho de novo com `dados_listings` e farei a seleção de uma coluna do meu *dataframe*, reparem em cima eu não fiz seleção alguma.
+
+ Eu coloquei `dados_listings.apply()`, só que eu quero fazer essa seleção, justamente essa informação que tem a piscina, que é o `['imovel_caracteristicas_condominio']`. E no final eu volto a fazer o `.apply()`.
+
+```python
+dados_listings['Piscina'] = dados_listings['imovel_caracteristicas_condominio'].apply()
+```
+
+ O `apply()` está em cima de uma *series*, eu posso fazer um `lambda` dentro e vou chamar de `x:`, pode ser qualquer nome válido, como eu falei. E depois, um teste, uma condição `'Piscina' in x`. Eu tenho informação de Piscina dentro daquela lista que vai ser passada aqui? Aqui estamos passando as listas.
+
+```python
+dados_listings['Piscina'] = dados_listings['imovel_caracteristicas_condominio'].apply(lambda x: 'Piscina' in x)
+```
+
+ Todo `x` vai ler cada linha dessa *series*, dessa coluna `imovel_caracteristicas_condominio` e vai passar para o `x`, vai ler lista daquele e eu faço a pergunta aqui: Piscina existe dentro daquela lista? Se existir, ele vai colocar *True*, se não, *False*.
+
+ Para visualizar essa informação no final, eu vou fazer uma seleção só das colunas que interessam, por exemplo, `dados_listings`, eu estou criando um *dataframe* com as características do condomínio e essa nova variável que eu acabei de criar `[['imovel_caracteristicas_condominio', Piscina']].head()`.
+
+ Só para vermos ele funcionando. *False*, *True*, *False*, *True*, mas eu não consigo ver a minha variável completa.
+
+```python
+dados_listings['Piscina'] = dados_listings['imovel_caracteristicas_condominio'].apply(lambda x: 'Piscina' in x)
+dados_listings[['imovel_caracteristicas_condominio', 'Piscina']].head()
+```
+
+![36](https://user-images.githubusercontent.com/59926475/168190764-d00cfed7-a7d5-43ea-a920-795fe08e9c54.png)
+
+Lembra quando estávamos trabalhando com configurações do Pandas, fizemos aquela configuração de linha, de coluna, aqui também podemos fazer uma configuração para a largura da coluna, que vai ser `pd.set_option('display.max_colwidth'. None)`
+. Se eu fizer essa configuração ele vai deixar a largura auto ajustável. Aperto "Shift + Enter". Eu já posso copiar o mesmo trecho `dados_listings`
+ da linha 2.
+
+```python
+pd.set_option('display.max_colwidth'. None)
+```
+
+```python
+dados_listings['imovel_caracteristicas_condominio', 'Piscina']].head()
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/7e90c027-f150-41aa-8f3d-dc919c9ac893/Untitled.png)
+
+### Agrupamentos
+
+Na fase de preparação dos nossos dados, gerar **sumarizações de estatísticas** é algo fundamental, porque com essas ferramentas conseguiremos começar a identificar os possíveis candidatos a *outlier* dos nossos dados. Podemos identificar também a possibilidade de precisar fazer algum tipo de separação dos nossos dados.
+
+ Por exemplo, com **distribuições de frequências** podemos ver a **simetria** na nossa distribuição, se precisaremos aplicar algum tipo de transformação e qual tipo de transformação.
+
+ Para fazer essas sumarizações e criar estatísticas descritivas em cima disso, temos algumas ferramentas no Pandas que vão nos ajudar.
+
+ A primeira delas é o **`aggregate()`**, com ele eu consigo personalizar as estatísticas que eu quero aplicar em certas colunas do meu *dataframe*.
+
+ Por exemplo, eu vou selecionar algumas colunas, no caso, as colunas de valores do nosso *dataframe*, valor da venda, valor do condomínio e valor do IPTU: `dados_listings[['anuncio_valores_venda', anuncio_valores_condominio', 'anuncio_valores_iptu']]`. E em cima desse pequeno *dataframe* faremos as agregações.
+
+ Eu chamo a função `.aggregate()` e passo para ela uma lista com as funções que eu quero que ela retorne, por exemplo, a soma seria `(['sum',`, eu passo as *strings* justamente com os nomes dos métodos estatísticos que eu vou usar para calcular, média `'mean'`, desvio padrão, eu posso passar `sdt'])`, e assim sucessivamente, *mean*, *max*, todas as outras.
+
+ Agora basta apertar "Shift + Enter".
+
+```python
+dados_listings[['anuncio_valores_venda', anuncio_valores_condominio', 'anuncio_valores_iptu']]aggregate(['sum', 'mean', 'std'])
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/f43defd6-0c2a-415d-8580-3a094e590479/Untitled.png)
+
+Rodou novamente e está lá a nossa sumarização, as colunas que eu escolhi e as estatísticas, soma, média e desvio padrão.
+
+Outra forma de fazer a mesma coisa, de digitarmos um pouco menos, seria escrever `.agg()` no lugar de `.aggregate()`. Temos o mesmo resultado. Outra forma de fazer agrupamentos, e agora eu estou falando agrupar segundo algum outro tipo de variável, é usando o **`groupby()`**.
+
+```python
+dados_listings[['anuncio_valores_venda', 'anuncio_valores_condominio', 'anuncio_valores_iptu']].agg(['sum', 'mean', 'std'])COPIAR CÓDIGO
+```
+
+Ele vai nos ajudar a fazer sumarizações segundo alguma coluna, por exemplo, categórica. Em questão de tipo de propriedade temos apartamento, casa, cobertura, eu quero as estatísticas segundo essa variável, ou seja, eu quero a média para apartamento, a média para casa, para cobertura e assim sucessivamente. O `groupby()` nos ajuda nessa tarefa.
+
+ Eu vou criar uma variável chamada `grupamento =` e vou igualá-la ao conjunto que eu tenho de colunas do meu *data frame* que vão ser as informações de tipo de propriedade, como eu acabei de falar e a coluna valor por metro quadrado que calculamos nos vídeos anteriores `dados_listings[['imovel_tipos_propriedade', 'valor_m2']]`.
+
+ É em cima dessas duas colunas que eu quero fazer o grupamento. Para fazer o grupamento `.groupby()` e passo a variável que eu quero utilizar como agrupador `by=`. Então, eu passo justamente esse `'imovel_tipo_propriedade'`.
+
+ Tudo que eu pedir agora para esse objeto novo que eu criei, o grupamento, virá segundo a variável tipo de propriedade por apartamento, por casa e por aí vai.
+
+ Vou mostrar só o agrupamento para que você veja que ele não vai criar nada prático agora. Ele vai criar um *object*, que é um objeto do tipo `DataFrameGroupBy`, em cima dele eu vou fazer os agrupamentos.
+
+```python
+grupamento = dados_listings[['imovel_tipos_propriedade', 'valor_m2']].groupby(by='imovel_tipos_propriedade')COPIAR CÓDIGO
+```
+
+> <pandas.core.groupby.generic.DataFrameGroupBy object at 0x7fb591e17cd0>
+> 
+
+[03:46] Agora eu posso calcular, por exemplo, uma estatística descritiva simples, que seria a média, chamando `grupamento.mean()`. Eu vou fazer um `.round()` para ficar mais clara a nossa visualização.
+
+```python
+grupamento.mean().round()
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/8725b7f1-dfef-4465-a229-cf485fa30889/Untitled.png)
+
+Agora todas as estatísticas vão vir agrupadas pelo tipo de propriedade: apartamento, casa, aqui temos as médias para cada um desses grupos.
+
+ Eu posso também usar esse `.aggregate()` que eu acabei de mostrar, eu faria da seguinte forma, eu chamaria o `grupamento.` novamente, `agg()` que é o *aggregate*, passaria as funções e o `func`, parâmetro usado para mostrar as funções. Eu estou chamando a função mínima, média, máximo e desvio padrão, respectivamente: `'min',`,`'mean',`,`'max'`, `'std'`. Ele vai calcular tudo isso segundo os tipos de propriedade.
+
+```python
+grupamento.agg(func=['min', 'mean', 'max', 'std'])
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/9f18de69-c9e3-44aa-9c16-1e3afeef9676/Untitled.png)
+
+Outra coisa que podemos fazer são os agrupamentos não segundo somente uma coluna, podemos colocar mais de uma coluna, teremos um **índice múltiplo**, o *multi-index*.
+
+ Eu vou também selecionar mais uma informação, estou novamente chamando `grupamento = dados_listings` e eu seleciono `'imovel_tipos_propriedade', 'classe_valor',` que é a variável que construímos nos vídeos anteriores, a classe de valor que é o imóvel padrão, alto padrão e popular e novamente o `'valor_m2'`.
+
+ Como ficou uma linha muito comprida, eu posso usar a barra invertida para pular uma linha e continuar a codificação embaixo. Então o `.groupby()` vai ficar embaixo, dentro eu passo um `by=` um pouco diferente, com mais de uma informação, aqui dentro vai ser segundo `['imovel_tipos_propriedade', 'classe_valor',])`.
+
+ As estatísticas que ele vai criar vão ser segundo essas duas informações. Se eu fizer novamente `grupamento.mean().round(2)`, ele vai calcular segundo tipo de propriedade e classe_valor.
+
+```python
+grupamento = dados_listings[['imovel_tipos_propriedade','classe_valor', 'valor_m2']] \
+     .groupby(by=['imovel_tipos_propriedade', 'classe_valor'])
+```
+
+```python
+grupamento.mean().round(2)
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/32b288af-ff74-46be-a50b-6daa5696b4e9/Untitled.png)
+
+A mesma coisa para aquele que acabamos de fazer com mais estatísticas, usando o nosso `agg,`, que é o *aggregate*, `grupamento.agg(func=['min', 'mean', 'max', 'std'])`, ele vai fazer para cada um deles, do jeito que queríamos.
+
+```python 
+grupamento.agg(func=['min', 'mean', 'max', 'std'])
+```
